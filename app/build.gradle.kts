@@ -55,6 +55,9 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     val room_version = "2.6.1"
 
+    implementation ("com.google.code.gson:gson:2.8.6")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
+
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
     kapt("androidx.room:room-compiler:$room_version")

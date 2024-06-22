@@ -18,5 +18,4 @@ class App : Application() {
             Db.NAME
         ).build()
     }
-
 }
