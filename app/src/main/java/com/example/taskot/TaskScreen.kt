@@ -59,7 +59,7 @@ fun TaskScreen(viewModel: ViewModel, activity: ComponentActivity) {
     ) {
         FloatingActionButton(
             onClick = {
-                /*viewModel.exportTasksToFile(activity)*/
+                viewModel.exportDatabaseToCSV(activity)
             },
             containerColor = Color(0xFFBDFA8F)
         ) {

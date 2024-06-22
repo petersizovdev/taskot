@@ -1,23 +1,27 @@
 package com.example.taskot
 
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.os.Build
+import android.os.Environment
+import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
+import androidx.room.Room.databaseBuilder
+import com.example.taskot.db.Dao
+import com.opencsv.CSVWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileWriter
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 
-class ViewModel : ViewModel() {
+
+class ViewModel (private val dao: Dao) : ViewModel() {
     val taskDao = App.taskDb.getDao()
     val taskList : LiveData<List<Task>> = taskDao.getAllTasks()
 
@@ -38,11 +42,33 @@ class ViewModel : ViewModel() {
         }
     }
 
+    fun exportDatabaseToCSV(activity: ComponentActivity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val context = activity.applicationContext
+            val tasks = dao.getAllTasksList()
+            exportToCSV(tasks, context)
+        }
+    }
 
+    private fun exportToCSV(tasks: List<Task>, context: Context) {
+        val exportDir = File(context.getExternalFilesDir(null), "exports")
+        if (!exportDir.exists()) {
+            exportDir.mkdirs()
+        }
 
-    /*@RequiresApi(Build.VERSION_CODES.O)
-    fun exportTasksToFile() {
-
-    }*/
+        val file = File(exportDir, "tasks.csv")
+        try {
+            file.createNewFile()
+            CSVWriter(FileWriter(file)).use { csvWrite ->
+                csvWrite.writeNext(arrayOf("ID", "Title", "Time"))
+                for (task in tasks) {
+                    val arrStr = arrayOf(task.id.toString(), task.title, task.time.toString())
+                    csvWrite.writeNext(arrStr)
+                }
+            }
+        } catch (sqlEx: Exception) {
+            Log.e("ViewModel", sqlEx.message, sqlEx)
+        }
+    }
 }
 
