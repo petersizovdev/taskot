@@ -4,7 +4,10 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
@@ -61,7 +64,6 @@ class ViewModel (private val dao: Dao) : ViewModel() {
         if (!exportDir.exists()) {
             exportDir.mkdirs()
         }
-
         val file = File(exportDir, "tasks.csv")
         try {
             file.createNewFile()
@@ -71,6 +73,10 @@ class ViewModel (private val dao: Dao) : ViewModel() {
                     val arrStr = arrayOf(task.id.toString(), task.title, task.time.toString())
                     csvWrite.writeNext(arrStr)
                 }
+            }
+            //уведомление, что файл сохранен
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context, "Файл сохранен", Toast.LENGTH_SHORT).show()
             }
         } catch (sqlEx: Exception) {
             Log.e("ViewModel", sqlEx.message, sqlEx)
@@ -83,16 +89,13 @@ class ViewModel (private val dao: Dao) : ViewModel() {
             val csvFile = File(context.getExternalFilesDir(null), "exports/tasks.csv")
             if (csvFile.exists()) {
                 CSVReader(FileReader(csvFile)).use { csvReader ->
-                    // Пропускаем заголовок CSV
                     csvReader.readNext()
-
                     var nextLine: Array<String>?
                     while (csvReader.readNext().also { nextLine = it } != null) {
                         if (nextLine != null && nextLine!!.size >= 3) {
                             val id = nextLine!![0].toIntOrNull()
                             val title = nextLine!![1]
                             try {
-                                // Обновляем формат для соответствия вашему формату даты и времени
                                 val dateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
                                 val time = dateFormat.parse(nextLine!![2])
                                 if (id != null && time != null) {
@@ -100,7 +103,6 @@ class ViewModel (private val dao: Dao) : ViewModel() {
                                     dao.addTask(task)
                                 }
                             } catch (e: ParseException) {
-                                // Обработка ошибки, если строка не может быть преобразована в дату
                                 Log.e("ViewModel", "Unparseable date: ${nextLine!![2]}", e)
                             }
                         }

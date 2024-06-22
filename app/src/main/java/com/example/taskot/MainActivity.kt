@@ -13,7 +13,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.taskot.db.ViewModelFactory
 
-// Ваш MainActivity с использованием ViewModelFactory
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
