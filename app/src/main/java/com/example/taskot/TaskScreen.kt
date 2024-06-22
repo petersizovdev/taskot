@@ -46,7 +46,7 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskScreen(viewModel: ViewModel, activity: ComponentActivity) {
-    val todoList by viewModel.taskList.observeAsState()
+    val taskList by viewModel.taskList.observeAsState()
     var isDialogOpen by remember { mutableStateOf(false) }
     var editingTask by remember { mutableStateOf(Task(time = Date.from(Instant.now()), title = "")) }
 
@@ -73,41 +73,60 @@ fun TaskScreen(viewModel: ViewModel, activity: ComponentActivity) {
     }
 
     Column(modifier = Modifier.fillMaxHeight()) {
+        Button(
+            onClick = {
+                editingTask = Task(time = Date.from(Instant.now()), title = "")
+                isDialogOpen = true
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = Color(0xFF7070fd01)
+            )
+        ) {
+            Text(text = "Add task",
+                color = Color(0xFF202020))
+        }
 
-            Button(
-                onClick = {
-                    editingTask = Task(time = Date.from(Instant.now()), title = "")
-                    isDialogOpen = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = Color(0xFF7070fd01)
+        taskList?.let { list ->
+            if (list.isEmpty()) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text = "Create a new task or import existing data.",
+                    fontSize = 16.sp
                 )
-            ) {
-                Text(text = "Add task",
-                    color = Color(0xFF202020))
-            }
-        todoList?.let { list ->
-            LazyColumn(content = {
-                itemsIndexed(list) { index, item ->
-                    TaskItem(
-                        item = item,
-                        onDelete = { item.id?.let { viewModel.deleteTask(it) } },
-                        onUpdate = { task ->
-                            editingTask = task
-                            isDialogOpen = true
-                        }
+                Button(
+                    onClick = {
+                        viewModel.importDatabaseFromCSV(activity)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = Color(0x206c757d)
+
                     )
+                ) {
+                    Text(text = "Import tasks",
+                        color = Color(0xFF202020))
                 }
-            })
-        } ?: Text(
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            text = "No items yet",
-            fontSize = 16.sp
-        )
+            } else {
+                LazyColumn(content = {
+                    itemsIndexed(list) { index, item ->
+                        TaskItem(
+                            item = item,
+                            onDelete = { item.id?.let { viewModel.deleteTask(it) } },
+                            onUpdate = { task ->
+                                editingTask = task
+                                isDialogOpen = true
+                            }
+                        )
+                    }
+                })
+            }
+        }
     }
     if (isDialogOpen) {
         TaskEditDialog(task = editingTask, onDismiss = { isDialogOpen = false }) { newTask ->

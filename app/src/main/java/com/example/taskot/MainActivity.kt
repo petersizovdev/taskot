@@ -18,14 +18,8 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Создаем экземпляр Dao
         val dao = App.taskDb.getDao()
-
-        // Создаем фабрику ViewModel с зависимостью Dao
         val viewModelFactory = ViewModelFactory(dao)
-
-        // Получаем ViewModel через фабрику
         val viewModel = ViewModelProvider(this, viewModelFactory)[ViewModel::class.java]
         setContent {
             TaskotTheme {

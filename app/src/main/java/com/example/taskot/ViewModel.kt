@@ -12,13 +12,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room.databaseBuilder
 import com.example.taskot.db.Dao
+import com.example.taskot.db.Helpers
+import com.opencsv.CSVReader
 import com.opencsv.CSVWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileReader
 import java.io.FileWriter
+import java.text.ParseException
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date
+import java.util.Locale
 
 
 class ViewModel (private val dao: Dao) : ViewModel() {
@@ -70,5 +76,37 @@ class ViewModel (private val dao: Dao) : ViewModel() {
             Log.e("ViewModel", sqlEx.message, sqlEx)
         }
     }
-}
 
+    fun importDatabaseFromCSV(activity: ComponentActivity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val context = activity.applicationContext
+            val csvFile = File(context.getExternalFilesDir(null), "exports/tasks.csv")
+            if (csvFile.exists()) {
+                CSVReader(FileReader(csvFile)).use { csvReader ->
+                    // Пропускаем заголовок CSV
+                    csvReader.readNext()
+
+                    var nextLine: Array<String>?
+                    while (csvReader.readNext().also { nextLine = it } != null) {
+                        if (nextLine != null && nextLine!!.size >= 3) {
+                            val id = nextLine!![0].toIntOrNull()
+                            val title = nextLine!![1]
+                            try {
+                                // Обновляем формат для соответствия вашему формату даты и времени
+                                val dateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+                                val time = dateFormat.parse(nextLine!![2])
+                                if (id != null && time != null) {
+                                    val task = Task(id, title, time)
+                                    dao.addTask(task)
+                                }
+                            } catch (e: ParseException) {
+                                // Обработка ошибки, если строка не может быть преобразована в дату
+                                Log.e("ViewModel", "Unparseable date: ${nextLine!![2]}", e)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
